@@ -5,8 +5,8 @@ import game_framework
 
 PIXEL_PER_METER = (10.0 / 0.3)
 
-# Typical level-flight speed is about 32-48 km/h, so use the midpoint.
-FLIGHT_SPEED_KMPH = 40.0
+# A typical eagle's level-flight speed is about 50 km/h.
+FLIGHT_SPEED_KMPH = 50.0
 FLIGHT_SPEED_MPS = (FLIGHT_SPEED_KMPH * 1000.0 / 3600.0)
 FLIGHT_SPEED_PPS = (FLIGHT_SPEED_MPS * PIXEL_PER_METER)
 
@@ -18,14 +18,17 @@ FRAMES_PER_SECOND = (
 
 FRAME_WIDTH = 183
 FRAME_HEIGHT = 168
+DRAW_WIDTH = 110
+DRAW_HEIGHT = 101
 FRAMES_PER_ROW = 5
+SCREEN_WIDTH = 1600
 
 
 class Bird:
-    def __init__(self):
-        self.x, self.y = 1200, 400
+    def __init__(self, x, y):
+        self.x, self.y = x, y
         self.frame = 0.0
-        self.dir = -1
+        self.dir = 1
         self.image = load_image('bird_animation.png')
 
     def update(self):
@@ -34,19 +37,29 @@ class Bird:
         ) % SPRITE_FRAME_COUNT
         self.x += self.dir * FLIGHT_SPEED_PPS * game_framework.frame_time
 
-        if self.x < -FRAME_WIDTH:
-            self.x = 1600 + FRAME_WIDTH
+        edge = DRAW_WIDTH / 2
+        if self.x >= SCREEN_WIDTH - edge:
+            self.x = SCREEN_WIDTH - edge
+            self.dir = -1
+        elif self.x <= edge:
+            self.x = edge
+            self.dir = 1
 
     def draw(self):
         frame = int(self.frame)
         column = frame % FRAMES_PER_ROW
         row = frame // FRAMES_PER_ROW
         source_y = 506 - (row + 1) * FRAME_HEIGHT
-        self.image.clip_draw(
+        flip = '' if self.dir == 1 else 'h'
+        self.image.clip_composite_draw(
             column * FRAME_WIDTH,
             source_y,
             FRAME_WIDTH,
             FRAME_HEIGHT,
+            0,
+            flip,
             self.x,
             self.y,
+            DRAW_WIDTH,
+            DRAW_HEIGHT,
         )
